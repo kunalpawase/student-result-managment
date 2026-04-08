@@ -1,4 +1,4 @@
-name: CI/CD Pipeline — Student Result System
+name: CI/CD Pipeline - Student Result System
 
 on:
   push:
@@ -10,7 +10,7 @@ env:
   IMAGE_NAME: student-result-flask
 
 jobs:
-  # ── Job 1: Build & Test ──────────────────────────────────────────────────────
+  # ── Job 1: Build & Lint ──────────────────────────────────────────────────────
   build:
     name: Build & Lint
     runs-on: ubuntu-latest
@@ -32,7 +32,7 @@ jobs:
       - name: Lint code
         run: flake8 app.py --max-line-length=120 --ignore=E302,E305,E221,E701,E501
 
-  # ── Job 2: Docker Build & Image Scan ────────────────────────────────────────
+  # ── Job 2: Docker Build & Trivy Scan ────────────────────────────────────────
   docker-build-scan:
     name: Docker Build & Trivy Scan
     runs-on: ubuntu-latest
@@ -41,13 +41,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create .env for build
+      - name: Create .env from example
         run: cp .env.example .env
 
       - name: Build Docker image
         run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
-      - name: Scan image with Trivy (image scan)
+      - name: Scan image with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.IMAGE_NAME }}:${{ github.sha }}
@@ -55,7 +55,7 @@ jobs:
           exit-code: '0'
           severity: CRITICAL,HIGH
 
-      - name: Scan filesystem with Trivy (secrets & misconfigs)
+      - name: Scan filesystem with Trivy
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
@@ -64,7 +64,7 @@ jobs:
           exit-code: '0'
           scanners: secret,misconfig
 
-  # ── Job 3: Push to Docker Hub (only on main branch) ─────────────────────────
+  # ── Job 3: Push to Docker Hub ────────────────────────────────────────────────
   push:
     name: Push to Docker Hub
     runs-on: ubuntu-latest
@@ -74,7 +74,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to Docker Hub
+      - name: Create .env from example
+        run: cp .env.example .env
+
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}

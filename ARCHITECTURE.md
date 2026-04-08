@@ -1,5 +1,7 @@
 # Student Result Management System — Architecture & Implementation
 
+> CI/CD verified ✅
+
 ## Architecture Overview
 
 ```
