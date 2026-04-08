@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Result Management System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center; max-width: 500px; width: 90%; }
+        h1 { color: #333; margin-bottom: 30px; font-size: 28px; }
+        .nav-buttons { display: flex; flex-direction: column; gap: 20px; }
+        .btn { display: block; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; font-size: 18px; transition: background 0.3s; }
+        .btn:hover { background: #764ba2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Result Management System</h1>
+        <div class="nav-buttons">
+            <a href="{{ url_for('add_student') }}" class="btn">Add Student</a>
+            <a href="{{ url_for('view_result') }}" class="btn">View Results</a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Results</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 1000px; margin: 0 auto; }
+        h1 { color: #333; margin-bottom: 30px; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #667eea; color: white; font-weight: bold; }
+        tr:hover { background: #f5f5f5; }
+        .grade-A { color: #28a745; font-weight: bold; }
+        .grade-B { color: #17a2b8; font-weight: bold; }
+        .grade-C { color: #ffc107; font-weight: bold; }
+        .grade-D { color: #dc3545; font-weight: bold; }
+        .back-link { display: block; text-align: center; margin-top: 20px; color: #667eea; text-decoration: none; font-size: 16px; }
+        .back-link:hover { text-decoration: underline; }
+        .no-data { text-align: center; color: #999; padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Results</h1>
+        {% if results %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Roll Number</th>
+                    <th>Subject</th>
+                    <th>Marks</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                <tr>
+                    <td>{{ result.name }}</td>
+                    <td>{{ result.roll_number }}</td>
+                    <td>{{ result.subject }}</td>
+                    <td>{{ result.marks }}</td>
+                    <td class="grade-{{ result.grade }}">{{ result.grade }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="no-data">No results found. Add students to see results.</p>
+        {% endif %}
+        <a href="{{ url_for('index') }}" class="back-link">Back to Home</a>
+    </div>
+</body>
+</html>
