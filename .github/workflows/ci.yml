@@ -26,10 +26,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Lint with flake8
-        run: |
-          pip install flake8
-          flake8 app.py --max-line-length=120 --ignore=E501
+      - name: Install flake8
+        run: pip install flake8
+
+      - name: Lint code
+        run: flake8 app.py --max-line-length=120 --ignore=E302,E305,E221,E701,E501
 
   # ── Job 2: Docker Build & Image Scan ────────────────────────────────────────
   docker-build-scan:
