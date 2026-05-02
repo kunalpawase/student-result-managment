@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stats & Topper</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+            integrity="sha256-oVuCFqnFMBFMFMFMFMFMFMFMFMFMFMFMFMFMFMFMFM="
+            crossorigin="anonymous"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 1000px; margin: 0 auto; }
+        h1 { color: #333; margin-bottom: 20px; text-align: center; }
+        h2 { color: #555; margin: 25px 0 15px; font-size: 18px; border-left: 4px solid #667eea; padding-left: 10px; }
+        .nav { display: flex; gap: 10px; justify-content: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .btn { padding: 9px 18px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: bold; color: white; background: #667eea; }
+        .btn:hover { background: #764ba2; }
+
+        /* Topper Card */
+        .topper-card { background: linear-gradient(135deg, #f6d365, #fda085); border-radius: 10px; padding: 20px 25px; display: flex; align-items: center; gap: 20px; margin-bottom: 10px; }
+        .topper-card .trophy { font-size: 50px; }
+        .topper-card .info h3 { font-size: 22px; color: #333; }
+        .topper-card .info p  { color: #555; margin-top: 4px; font-size: 15px; }
+        .topper-card .marks-badge { margin-left: auto; background: white; border-radius: 50%; width: 70px; height: 70px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+        .topper-card .marks-badge span:first-child { font-size: 22px; font-weight: bold; color: #333; }
+        .topper-card .marks-badge span:last-child  { font-size: 12px; color: #888; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #667eea; color: white; }
+        tr:hover { background: #f9f9f9; }
+        .grade-A { color: #28a745; font-weight: bold; }
+        .grade-B { color: #17a2b8; font-weight: bold; }
+        .grade-C { color: #ffc107; font-weight: bold; }
+        .grade-D { color: #dc3545; font-weight: bold; }
+        .no-data { text-align: center; color: #999; padding: 20px; }
+
+        /* Chart */
+        .chart-wrap { max-width: 650px; margin: 0 auto; padding: 10px 0 20px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📊 Stats & Topper</h1>
+    <div class="nav">
+        <a href="{{ url_for('index') }}"      class="btn">🏠 Home</a>
+        <a href="{{ url_for('view_result') }}" class="btn">📋 All Results</a>
+        <a href="{{ url_for('search') }}"      class="btn">🔍 Search</a>
+    </div>
+
+    {% if topper %}
+
+    <!-- ── Overall Topper ─────────────────────────────────────────── -->
+    <h2>🏆 Overall Topper</h2>
+    <div class="topper-card">
+        <div class="trophy">🏆</div>
+        <div class="info">
+            <h3>{{ topper.name }}</h3>
+            <p>Roll No: {{ topper.roll_number }} &nbsp;|&nbsp; Subject: {{ topper.subject }}</p>
+            <p>Grade: <span class="grade-{{ topper.grade }}">{{ topper.grade }}</span></p>
+        </div>
+        <div class="marks-badge">
+            <span>{{ topper.marks }}</span>
+            <span>marks</span>
+        </div>
+    </div>
+
+    <!-- ── Subject-wise Average ───────────────────────────────────── -->
+    <h2>📚 Subject-wise Average Marks</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Avg Marks</th>
+                <th>Highest</th>
+                <th>Lowest</th>
+                <th>Students</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in subject_stats %}
+            <tr>
+                <td>{{ s.subject }}</td>
+                <td><strong>{{ s.avg_marks }}</strong></td>
+                <td style="color:#28a745">{{ s.highest }}</td>
+                <td style="color:#dc3545">{{ s.lowest }}</td>
+                <td>{{ s.total_students }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ── Bar Chart: Subject Averages ───────────────────────────── -->
+    <h2>📈 Average Marks Chart</h2>
+    <div class="chart-wrap">
+        <canvas id="avgChart"></canvas>
+    </div>
+    <script>
+        const labels  = [{% for s in subject_stats %}"{{ s.subject }}"{% if not loop.last %},{% endif %}{% endfor %}];
+        const avgData = [{% for s in subject_stats %}{{ s.avg_marks }}{% if not loop.last %},{% endif %}{% endfor %}];
+        new Chart(document.getElementById('avgChart').getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Average Marks',
+                    data: avgData,
+                    backgroundColor: 'rgba(102,126,234,0.7)',
+                    borderColor: '#667eea',
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, max: 100 }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    </script>
+
+    <!-- ── Topper Per Subject ─────────────────────────────────────── -->
+    <h2>🥇 Topper Per Subject</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Name</th>
+                <th>Roll Number</th>
+                <th>Marks</th>
+                <th>Grade</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in subject_toppers %}
+            <tr>
+                <td>{{ s.subject }}</td>
+                <td>{{ s.name }}</td>
+                <td>{{ s.roll_number }}</td>
+                <td>{{ s.marks }}</td>
+                <td class="grade-{{ s.grade }}">{{ s.grade }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+    <p class="no-data">No data available. <a href="{{ url_for('add_student') }}">Add students</a> to see stats.</p>
+    {% endif %}
+</div>
+</body>
+</html>

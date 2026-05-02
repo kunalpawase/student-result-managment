@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Student</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 900px; margin: 0 auto; }
+        h1 { color: #333; margin-bottom: 25px; text-align: center; }
+        .search-bar { display: flex; gap: 10px; margin-bottom: 25px; }
+        .search-bar input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; }
+        .search-bar input:focus { outline: none; border-color: #17a2b8; }
+        .search-bar button { padding: 12px 24px; background: #17a2b8; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        .search-bar button:hover { background: #117a8b; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #17a2b8; color: white; }
+        tr:hover { background: #f9f9f9; }
+        .grade-A { color: #28a745; font-weight: bold; }
+        .grade-B { color: #17a2b8; font-weight: bold; }
+        .grade-C { color: #ffc107; font-weight: bold; }
+        .grade-D { color: #dc3545; font-weight: bold; }
+        .no-data { text-align: center; color: #999; padding: 20px; }
+        .result-count { color: #555; margin-bottom: 15px; font-size: 14px; }
+        .nav { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn { padding: 9px 18px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: bold; color: white; background: #667eea; }
+        .btn:hover { background: #764ba2; }
+        .avg-row { background: #f0f8ff; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔍 Search Student</h1>
+    <div class="nav">
+        <a href="{{ url_for('index') }}" class="btn">🏠 Home</a>
+        <a href="{{ url_for('view_result') }}" class="btn">📋 All Results</a>
+    </div>
+
+    <form method="GET" action="{{ url_for('search') }}">
+        <div class="search-bar">
+            <input type="text" name="roll_number" placeholder="Enter Roll Number (e.g. R001)"
+                   value="{{ query }}" autofocus>
+            <button type="submit">Search</button>
+        </div>
+    </form>
+
+    {% if query %}
+        {% if results %}
+            <p class="result-count">Found <strong>{{ results|length }}</strong> record(s) for roll number: <strong>{{ query }}</strong></p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Roll Number</th>
+                        <th>Subject</th>
+                        <th>Marks</th>
+                        <th>Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    <tr>
+                        <td>{{ r.name }}</td>
+                        <td>{{ r.roll_number }}</td>
+                        <td>{{ r.subject }}</td>
+                        <td>{{ r.marks }}</td>
+                        <td class="grade-{{ r.grade }}">{{ r.grade }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="avg-row">
+                        <td colspan="3">Average Marks</td>
+                        <td>{{ (results | sum(attribute='marks') / results|length) | round(1) }}</td>
+                        <td>—</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% else %}
+            <p class="no-data">No student found with roll number <strong>{{ query }}</strong>.</p>
+        {% endif %}
+    {% else %}
+        <p class="no-data">Enter a roll number above to search.</p>
+    {% endif %}
+</div>
+</body>
+</html>

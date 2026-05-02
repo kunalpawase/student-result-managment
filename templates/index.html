@@ -6,20 +6,41 @@
     <title>Student Result Management System</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .container { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center; max-width: 500px; width: 90%; }
-        h1 { color: #333; margin-bottom: 30px; font-size: 28px; }
-        .nav-buttons { display: flex; flex-direction: column; gap: 20px; }
-        .btn { display: block; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; font-size: 18px; transition: background 0.3s; }
-        .btn:hover { background: #764ba2; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
+        .container { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center; max-width: 520px; width: 100%; }
+        h1 { color: #333; margin-bottom: 8px; font-size: 26px; }
+        p { color: #888; margin-bottom: 30px; font-size: 14px; }
+        .nav-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .btn { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 16px 10px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-size: 15px; font-weight: bold; transition: background 0.3s, transform 0.1s; }
+        .btn:hover { background: #764ba2; transform: translateY(-2px); }
+        .btn.green  { background: #28a745; }
+        .btn.green:hover  { background: #1e7e34; }
+        .btn.orange { background: #fd7e14; }
+        .btn.orange:hover { background: #e06c00; }
+        .btn.teal   { background: #17a2b8; }
+        .btn.teal:hover   { background: #117a8b; }
+        .btn.red    { background: #dc3545; }
+        .btn.red:hover    { background: #bd2130; }
+        .icon { font-size: 20px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Student Result Management System</h1>
+        <h1>🎓 Student Result Management</h1>
+        <p>Manage student records, results and analytics</p>
         <div class="nav-buttons">
-            <a href="{{ url_for('add_student') }}" class="btn">Add Student</a>
-            <a href="{{ url_for('view_result') }}" class="btn">View Results</a>
+            <a href="{{ url_for('add_student') }}" class="btn green">
+                <span class="icon">➕</span> Add Student
+            </a>
+            <a href="{{ url_for('view_result') }}" class="btn">
+                <span class="icon">📋</span> View Results
+            </a>
+            <a href="{{ url_for('search') }}" class="btn teal">
+                <span class="icon">🔍</span> Search Student
+            </a>
+            <a href="{{ url_for('stats') }}" class="btn orange">
+                <span class="icon">📊</span> Stats & Topper
+            </a>
         </div>
     </div>
 </body>

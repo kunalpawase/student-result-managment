@@ -16,7 +16,7 @@ handlers = [logging.StreamHandler()]
 try:
     handlers.append(RotatingFileHandler(f'{log_dir}/app.log', maxBytes=1_000_000, backupCount=3))
 except PermissionError:
-    pass  # volume not writable, stdout only
+    pass
 
 logging.basicConfig(
     level=logging.INFO,
@@ -54,7 +54,6 @@ def init_db():
                     marks INT NOT NULL
                 )
             """)
-            # Create restricted app user (security best practice)
             cursor.execute("""
                 CREATE USER IF NOT EXISTS 'app_user'@'%'
                 IDENTIFIED BY %s
@@ -69,7 +68,7 @@ def init_db():
         except mysql.connector.Error as err:
             logger.warning(f"DB connection attempt {attempt}/30 failed: {err}")
             time.sleep(2)
-    raise Exception("Could not connect to database after 30 attempts")
+    raise RuntimeError("Could not connect to database after 30 attempts")
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def calculate_grade(marks):
@@ -102,7 +101,7 @@ def add_student():
         cursor.close()
         conn.close()
 
-        logger.info(f"Student added: {name} | Roll: {roll_number} | Subject: {subject} | Marks: {marks}")
+        logger.info(f"Student added: Roll={roll_number} | Subject={subject} | Marks={marks}")
         return redirect(url_for('view_result'))
 
     return render_template('add_student.html')
@@ -111,7 +110,7 @@ def add_student():
 def view_result():
     conn   = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM results")
+    cursor.execute("SELECT * FROM results ORDER BY marks DESC")
     results = cursor.fetchall()
     cursor.close()
     conn.close()
@@ -119,8 +118,92 @@ def view_result():
     for result in results:
         result['grade'] = calculate_grade(result['marks'])
 
+    # Grade distribution counts for chart
+    grade_counts = {'A': 0, 'B': 0, 'C': 0, 'D': 0}
+    for r in results:
+        grade_counts[r['grade']] += 1
+
     logger.info(f"Results page accessed — {len(results)} records returned")
-    return render_template('view_result.html', results=results)
+    return render_template('view_result.html', results=results, grade_counts=grade_counts)
+
+@app.route('/search')
+def search():
+    query   = request.args.get('roll_number', '').strip()
+    results = []
+    if query:
+        conn   = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT * FROM results WHERE roll_number LIKE %s ORDER BY subject",
+            (f'%{query}%',)
+        )
+        results = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        for r in results:
+            r['grade'] = calculate_grade(r['marks'])
+        safe_query = ''.join(c for c in query if c.isalnum() or c in '-_')
+        logger.info(f"Search: '{safe_query}' — {len(results)} results")
+    return render_template('search.html', results=results, query=query)
+
+@app.route('/stats')
+def stats():
+    conn   = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Average marks per subject
+    cursor.execute("""
+        SELECT subject, ROUND(AVG(marks), 2) AS avg_marks,
+               MAX(marks) AS highest, MIN(marks) AS lowest,
+               COUNT(*) AS total_students
+        FROM results
+        GROUP BY subject
+        ORDER BY avg_marks DESC
+    """)
+    subject_stats = cursor.fetchall()
+
+    # Topper — highest marks overall
+    cursor.execute("""
+        SELECT * FROM results
+        ORDER BY marks DESC
+        LIMIT 1
+    """)
+    topper = cursor.fetchone()
+
+    # Top scorer per subject
+    cursor.execute("""
+        SELECT r.* FROM results r
+        INNER JOIN (
+            SELECT subject, MAX(marks) AS max_marks FROM results GROUP BY subject
+        ) t ON r.subject = t.subject AND r.marks = t.max_marks
+        ORDER BY r.subject
+    """)
+    subject_toppers = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    if topper:
+        topper['grade'] = calculate_grade(topper['marks'])
+    for s in subject_toppers:
+        s['grade'] = calculate_grade(s['marks'])
+
+    logger.info("Stats page accessed")
+    return render_template('stats.html',
+                           subject_stats=subject_stats,
+                           topper=topper,
+                           subject_toppers=subject_toppers)
+
+@app.route('/delete/<int:record_id>', methods=['POST'])
+def delete(record_id):
+    conn   = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM results WHERE id = %s", (record_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+    logger.info(f"Record deleted: id={record_id}")
+    return redirect(url_for('view_result'))
 
 @app.route('/health')
 def health():
@@ -136,4 +219,5 @@ def health():
 if __name__ == '__main__':
     init_db()
     debug_mode = os.environ.get('FLASK_DEBUG', '0') == '1'
-    app.run(host='0.0.0.0', port=5000, debug=debug_mode)
+    # 0.0.0.0 is required inside Docker so the container is reachable from outside
+    app.run(host='0.0.0.0', port=5000, debug=debug_mode)  # noqa: S104
